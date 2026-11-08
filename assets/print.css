@@ -1,0 +1,166 @@
+/* Compact paper layout; printing changes neither stored answers nor release gates. */
+.yp-print-value { display: none; }
+.yp-measure-lines > li { white-space: nowrap !important; font-size: var(--yp-measure-size, 12px) !important; }
+@media print {
+  @page { size: A4; margin: 8mm 10mm; }
+  html, body { background: #fff !important; color: #111 !important; }
+  body { font-size: 10.2pt !important; line-height: 1.28 !important; }
+  .yp-page { width: auto !important; max-width: none !important; padding: 0 !important; margin: 0 !important; }
+  .yp-top, .yp-preview, .yp-taskbar, .yp-actions, .yp-submit, .yp-back, .yp-chips,
+  .yp-retry, .yp-drop, .yp-progress, .yp-rec, .yp-filepick, .yp-files, .yp-file,
+  .yp-search, .yp-check, .yp-word .tools, .yp-method, .yp-submission-method,
+  .yp-kicker, .yp-banner, .yp-count, .yp-msg, .yp-audio, .yp-speak-panel,
+  [data-method], [data-paper-upload], [data-no-print], .no-print,
+  button, input[type="file"], audio, video, .yp-print-control { display: none !important; }
+  .yp-page h1 { font-size: 14pt !important; line-height: 1.15 !important; margin: 0 0 4pt !important; }
+  h2, h3, h4, summary, legend, .yp-prompt-line { break-after: avoid; }
+  .yp-page h2, .yp-rich h3 { font-size: 11.5pt !important; margin: 6pt 0 3pt !important; }
+  .yp-rich h4, .yp-sub, .yp-part { font-size: 10.2pt !important; margin: 5pt 0 2pt !important; }
+  p, .yp-rich p, .yp-rich ul, .yp-rich ol { margin: 2pt 0 !important; orphans: 2; widows: 2; }
+  ul, ol { padding-left: 16pt; }
+  a { color: inherit !important; text-decoration: none !important; }
+  details, .yp-q, .yp-block, .yp-fold, .yp-doc, .yp-pages, .yp-section, .yp-rich,
+  .yp-result, .yp-verdict, .yp-mistake, .yp-cards, .yp-notes, .yp-prompt, .yp-memo,
+  .yp-split, .yp-split-pane, .yp-split-text-item, .yp-split-text-body {
+    max-height: none !important; height: auto; overflow: visible !important;
+    border-radius: 0 !important; box-shadow: none !important; background: none !important;
+    break-inside: auto !important;
+  }
+  /* A reading task prints as one column: print.js has already moved each passage back to its own place in
+     the task, so the two panes are plain blocks here and the passage heading is an ordinary heading. */
+  .yp-split, .yp-split-pane, .yp-split-text-item, .yp-split-text-body { display: block !important; padding: 0 !important; border: 0 !important; margin: 0 !important; }
+  .yp-split-text-head { position: static !important; padding: 0 !important; border: 0 !important; background: none !important; font-size: 11.5pt !important; margin: 6pt 0 3pt !important; }
+  .yp-split-text-head small { display: none !important; }
+  .yp-split-pane .yp-rich table { display: table !important; width: 100% !important; }
+  details { border: 0 !important; margin: 3pt 0 !important; padding: 0 !important; }
+  details > summary { display: block !important; list-style: none !important; padding: 2pt 0 !important; font-size: 10.5pt !important; }
+  details > summary::-webkit-details-marker { display: none !important; }
+  details > summary::after { content: none !important; }
+  details > :not(summary) { display: block; }
+  .yp-fold-body, .yp-doc-body, .yp-pages-body { padding: 0 !important; }
+  .yp-section { border-top: .5pt solid #999 !important; margin: 4pt 0 0 !important; padding: 3pt 0 0 !important; }
+  .yp-block, .yp-block.yp-rich, .yp-q, .yp-mistake { margin: 3pt 0 !important; padding: 2pt 0 !important; border: 0 !important; }
+  .yp-q { border: 0 !important; }
+  .yp-q.yp-print-short { break-inside: avoid !important; }
+  .yp-q legend, .yp-q .yp-prompt-line { margin: 0 0 2pt !important; }
+  .yp-n { min-width: 15pt !important; height: auto !important; padding: 0 !important; margin-right: 4pt !important; color: #111 !important; background: none !important; font-size: 9.3pt !important; }
+  .yp-opt { gap: 5pt !important; border: 0 !important; padding: 1pt 0 !important; margin: 1pt 0 !important; background: none !important; break-inside: avoid; }
+  .yp-letter { color: #111 !important; }
+  .yp-gap { display: block !important; }
+  .yp-gap-line { line-height: 1.45 !important; }
+  .yp-print-value { color: #111 !important; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .yp-print-guide { display: block !important; font-size: 8.5pt !important; break-before: avoid; }
+  .yp-print-inline { display: inline !important; min-width: 90pt; border-bottom: .5pt solid #666; padding: 0 3pt; }
+  .yp-print-inline.yp-print-empty { display: inline-block !important; width: 100pt; min-height: 12pt; }
+  .yp-print-answer { display: block !important; margin: 3pt 0 !important; padding: 2pt 0 !important; height: auto !important; max-height: none !important; overflow: visible !important; break-inside: auto !important; }
+  .yp-print-mark { display: inline-block !important; width: 10pt; flex: 0 0 10pt; font: 10pt/1.3 Arial, sans-serif !important; }
+  .yp-print-empty.yp-print-short-space { min-height: 24pt !important; border-bottom: .5pt solid #aaa; }
+  .yp-extra-task .yp-print-empty.yp-print-short-space { min-height: 12pt !important; }
+  .yp-extra-task .yp-q { margin: 1pt 0 !important; padding: .5pt 0 !important; }
+  .yp-extra-task .yp-print-answer { margin: 2pt 0 !important; padding: 1pt 0 !important; }
+  /* A single writing rule beside each short prompt; table borders already supply structure. */
+  .yp-extra-task .yp-q .yp-prompt-line { font-weight: 400 !important; }
+  .yp-print-blank .yp-extra-task .yp-print-short-answer { display: flex !important; align-items: baseline; flex-wrap: wrap; column-gap: 5pt; row-gap: 0; }
+  .yp-print-blank .yp-extra-task .yp-print-short-answer .yp-prompt-line { flex: 0 1 auto; margin: 0 !important; }
+  .yp-print-blank .yp-extra-task .yp-print-short-answer .yp-print-answer { flex: 1 1 100pt; min-width: 85pt; min-height: 12pt !important; margin: 0 !important; padding: 0 !important; }
+  .yp-print-blank .yp-extra-task td .yp-print-short-answer { display: block !important; }
+  .yp-extra-task table { margin: 3pt 0 !important; }
+  .yp-extra-task th, .yp-extra-task td { padding: 2pt 4pt !important; }
+  .yp-extra-task .yp-flow { break-inside: avoid !important; }
+  .yp-extra-task .yp-q legend { font-weight: 400 !important; }
+  .yp-extra-task td .yp-q:last-child .yp-print-empty { border-bottom: 0 !important; }
+
+  .yp-print-empty.yp-print-long-space { min-height: 52pt !important; border-bottom: .5pt solid #aaa; }
+  /* On a blank sheet a writing prompt, its space and its word guide stay on one page. */
+  .yp-print-blank .yp-q:has(.yp-print-long-space), .yp-print-blank .yp-q:has(.yp-print-guide) { break-inside: avoid !important; }
+  /* A task printed above its writing question (the mock articles and emails) stays with it. */
+  .yp-print-blank .yp-block:has(+ .yp-q .yp-print-long-space), .yp-print-blank .yp-block:has(+ .yp-q .yp-print-guide) { break-inside: avoid !important; break-after: avoid !important; }
+  .yp-print-columns { columns: 2; column-gap: 6mm; column-rule: .4pt solid #ddd; }
+  .yp-count, .yp-optional, .yp-or, .yp-note { font-size: 8.5pt !important; margin: 2pt 0 !important; }
+  .yp-count:empty, .yp-msg:empty { display: none !important; }
+  .yp-verdict, .yp-result { border: .5pt solid #aaa !important; margin: 2pt 0 !important; padding: 3pt 4pt !important; font-size: 9.4pt !important; color: #111 !important; }
+  .yp-verdict p { margin: 1.5pt 0 !important; }
+  .yp-verdict .label { font-weight: 700 !important; }
+  .yp-result { border: 0 !important; border-bottom: .5pt solid #aaa !important; padding: 0 0 3pt !important; }
+  .yp-result h2 { display: none !important; }
+  .yp-score { font-size: 11pt !important; margin: 0 !important; }
+  .yp-pre, .yp-notes { white-space: pre-wrap !important; overflow-wrap: anywhere !important; font-size: inherit !important; }
+  .yp-notes, .yp-example, .yp-prompt, .yp-memo { padding: 3pt 6pt !important; margin: 3pt 0 !important; }
+  .yp-example, .yp-prompt { font-size: inherit !important; border: 0 !important; }
+  .yp-lines { padding-left: 25pt !important; margin: 3pt 0 5pt !important; }
+  .yp-lines li { line-height: 1.35 !important; }
+  .yp-lines li.yp-pstart { margin-top: 5pt !important; }
+  /* One paper line = one printed line: the passage shrinks to its widest line (print.js), never below 7pt. */
+  @supports (font-size: 1cqi) {
+    .yp-lines.yp-fit-lines { container-type: inline-size; }
+    .yp-lines.yp-fit-lines > li { white-space: nowrap !important; font-size: max(7pt, min(1em, calc(98cqi / var(--yp-line-em)))) !important; }
+  }
+  table, .yp-table, .yp-wordtable { width: 100% !important; max-width: none !important; border-collapse: collapse !important; font-size: 9pt !important; overflow: visible !important; break-inside: auto !important; }
+  thead, .yp-wordtable thead { display: table-header-group !important; }
+  tbody { display: table-row-group !important; }
+  tr, .yp-wordtable tr { display: table-row !important; break-inside: avoid; }
+  th, td, .yp-table th, .yp-table td, .yp-rich th, .yp-rich td, .yp-wordtable th, .yp-wordtable td { display: table-cell !important; float: none !important; padding: 3pt 4pt !important; border-color: #aaa !important; }
+  /* A column is never narrower than its longest word, so words and numbers stay whole. */
+  th, td { overflow-wrap: break-word !important; word-break: normal !important; }
+  .yp-wordtable .ck { display: none !important; }
+  img, .yp-pages-body img, .yp-figure .yp-pages-body img { max-width: 100% !important; width: auto !important; max-height: 235mm; object-fit: contain; margin: 3pt auto !important; border: 0 !important; break-inside: avoid; }
+  .yp-card, .yp-log a, .yp-word { padding: 4pt 0 !important; margin: 0 !important; border-radius: 0 !important; break-inside: avoid; }
+  .yp-card h3, .yp-log strong, .yp-word .w { font-size: 10.5pt !important; }
+  .yp-meta, .yp-word .pos, .yp-word .ex { font-size: 9pt !important; }
+  .yp-print-blank .yp-verdict, .yp-print-blank .yp-result, .yp-print-blank .yp-banner,
+  .yp-print-blank [data-print-feedback], .yp-print-blank .yp-paper-review,
+  .yp-print-blank .yp-review, .yp-print-blank .yp-count { display: none !important; }
+}
+/* Print-first additions (2026-10-24): print-only lines, mistake-log retry space, paper hand-in receipt. */
+.yp-print-only { display: none; }
+@media print {
+  .yp-print-only { display: block !important; font-size: 9.5pt !important; margin: 0 0 3pt !important; }
+  .yp-print-retry { display: block !important; min-height: 16pt; margin: 2pt 0 0 !important; border-bottom: .5pt solid #888; font-size: 9pt !important; color: #444 !important; }
+  .yp-paper-receipt { display: block !important; margin: 0 0 4pt !important; padding: 0 !important; background: none !important; font-size: 9pt !important; }
+  /* A listening script prints only when the learner opened it (2026-10-25). */
+  details[data-print-if-open]:not([open]) { display: none !important; }
+  /* The hand-in panel never prints; its empty wrapper alone pushed a blank last page onto a full mock (2026-10-24). */
+  [data-handin], .yp-handin, .yp-handin-hint { display: none !important; }
+  .yp-original { margin: 1.5pt 0 !important; }
+  .yp-error-span, .yp-del { color: #555 !important; text-decoration: line-through; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .yp-fix-span, .yp-ins { color: #b42318 !important; text-decoration: none; font-weight: 600; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .yp-mistake { break-inside: avoid; border-bottom: .4pt solid #ccc !important; }
+  .yp-mistake dl { margin: 1pt 0 !important; }
+  .yp-words { margin: 0 !important; padding: 0 !important; }
+  .yp-vocab-list { break-inside: auto; }
+  .yp-print-blank .yp-paper-receipt { display: none !important; }
+}
+/* Fewer near-empty last pages (2026-10-24, measured on all 111 local PDFs): two-column short-question tasks and
+   class summaries print a little denser, so a matching task or a summary no longer leaves one or two items alone
+   on a second page. Text stays at 9.7–9.8 pt. */
+@media print {
+  .yp-print-columns .yp-q { margin: 1.5pt 0 !important; padding: 1pt 0 !important; }
+  .yp-print-columns .yp-q legend { margin: 0 0 1pt !important; }
+  .yp-print-columns .yp-inline .yp-opts { gap: 0 6pt !important; }
+  .yp-print-columns .yp-inline .yp-opt { padding: 0 !important; margin: 0 !important; min-width: 0 !important; }
+  .yp-print-columns .yp-rich p { line-height: 1.22 !important; }
+  .yp-print-columns .yp-rich p, .yp-print-columns .yp-rich li { font-size: 9.7pt !important; }
+  .yp-summary { font-size: 9.8pt !important; }
+  .yp-summary table { font-size: 8.8pt !important; }
+  .yp-summary .yp-fold-body p, .yp-summary .yp-fold-body li { margin: 1pt 0 !important; line-height: 1.24 !important; }
+  .yp-summary .yp-sumfold { margin: 2pt 0 !important; }
+  .yp-summary table th, .yp-summary table td { padding: 1.5pt 3pt !important; }
+}
+/* Safari and every iPad/iPhone browser (WebKit) print a column block as a single column and cut a line in two
+   where it meets a page break. There the block keeps the denser type above but prints as one plain column, so
+   each question moves whole to the next page (2026-10-25; Chrome keeps its two columns). WebKit also cuts a
+   grid row at a page break, so the statement lists (A–H), clue questions, word cards and mistake details print
+   as ordinary lines there. */
+@supports (font: -apple-system-body) {
+  @media print {
+    .yp-print-columns { columns: auto !important; column-rule: none !important; }
+    .yp-statements li, .yp-cluebox .yp-clueqs li { display: block !important; padding-left: 2em !important; text-indent: -2em; }
+    .yp-statements li > b:first-child, .yp-cluebox .yp-clueqs li > .yp-n:first-child { display: inline-block; width: 2em; text-indent: 0; }
+    .yp-statements li > span, .yp-cluebox .yp-clueqs li > span { text-indent: 0; }
+    .yp-words, .yp-word, .yp-log, .yp-log a { display: block !important; }
+    .yp-word .ex { display: block; }
+    .yp-mistake dl { display: block !important; }
+    .yp-mistake dl > dt { float: left; clear: left; margin-right: 6pt; }
+    .yp-mistake dl > dd { margin-left: 0 !important; }
+  }
+}
