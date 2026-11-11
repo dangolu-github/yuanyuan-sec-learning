@@ -2,6 +2,10 @@
 // here: the browser keeps an opaque trust credential and a short-lived access token.
 // Every call is a POST with a JSON body (text/plain, so no CORS preflight): passwords, tokens and answers never
 // travel in a URL, and the endpoint can be a narrow relay for access from mainland China.
+// Remembered sign-in (2026-11-11): the credential is sent with every request and accepted on its own when
+// the short token has gone, so the password is asked for once per browser. It is forgotten only when the
+// course says explicitly that this browser is unknown or was signed out; a connection problem keeps it and
+// offers to try again.
 (() => {
   const trustedBrowserKey = 'yy-sec-trusted-browser-v1';
   const deviceTokenKey = 'yy-sec-device-token-v1';
@@ -19,6 +23,16 @@
   const writeStorage = (storage, key, value) => {
     try { storage.setItem(key, value); return true; }
     catch { return false; }
+  };
+  const removeStorage = (storage, key) => {
+    try { storage.removeItem(key); } catch { /* nothing stored */ }
+  };
+  // Only an explicit answer from the course ends a remembered browser (the error carries `reason`).
+  const forgetBrowser = () => {
+    removeStorage(window.localStorage, deviceTokenKey);
+    removeStorage(window.localStorage, trustedBrowserKey);
+    removeStorage(window.sessionStorage, tokenKey);
+    removeStorage(window.sessionStorage, expiryKey);
   };
   const getToken = () => readStorage(window.sessionStorage, tokenKey);
   const getDeviceToken = () => readStorage(window.localStorage, deviceTokenKey);
@@ -61,13 +75,20 @@
     } finally { window.clearTimeout(timeout); }
   };
 
+  // A refusal from the course carries `reason` ('unknown' or 'revoked'); a request that never got an answer
+  // does not, and is never taken as a refusal.
   const requestAccess = async (action, parameters) => {
     const data = await requestData(action, parameters);
-    if (!data || !data.ok || !data.accessToken) throw new Error((data && data.error) || 'Access could not be confirmed.');
+    if (!data || !data.ok || !data.accessToken) {
+      const error = new Error((data && data.error) || 'Access could not be confirmed.');
+      if (data && data.reason) error.reason = data.reason;
+      throw error;
+    }
     return data;
   };
   const authorize = (code) => requestAccess('authorizeAccess', { code });
   const renewAccess = (deviceToken) => requestAccess('renewAccess', { deviceToken });
+  const OFFLINE = 'We could not reach your course. Check your connection and try again.';
 
   async function ensureFreshAccess(force) {
     if (renewal) return renewal;
@@ -84,19 +105,26 @@
       reveal();
       resolveReady();
       return access.accessToken;
-    }).catch(() => {
-      showGate();
-      throw new Error('We could not reconnect. Check your connection and enter the course password again.');
+    }).catch((error) => {
+      if (error && error.reason) {
+        forgetBrowser();
+        showGate();
+        throw new Error('Please enter the course password again. Nothing you saved is lost.');
+      }
+      // No answer: the remembered browser stays remembered. An old token still goes with the credential,
+      // which the course accepts on its own.
+      if (!force && token) return token;
+      throw new Error(OFFLINE);
     }).finally(() => { renewal = null; });
     return renewal;
   }
 
   async function request(action, parameters, timeoutMs) {
     let token = await ensureFreshAccess(false);
-    let data = await requestData(action, Object.assign({}, parameters, { accessToken: token }), timeoutMs);
+    let data = await requestData(action, Object.assign({}, parameters, { accessToken: token, deviceToken: getDeviceToken() }), timeoutMs);
     if (data && !data.ok && /course access expired/i.test(data.error || '')) {
       token = await ensureFreshAccess(true);
-      data = await requestData(action, Object.assign({}, parameters, { accessToken: token }), timeoutMs);
+      data = await requestData(action, Object.assign({}, parameters, { accessToken: token, deviceToken: getDeviceToken() }), timeoutMs);
     }
     if (!data || !data.ok) throw new Error((data && data.error) || 'The request could not be confirmed. Please try again.');
     return data;
@@ -108,7 +136,7 @@
     const token = await ensureFreshAccess(false);
     const requestId = randomId('req');
     let result = null;
-    try { result = await requestData(action, Object.assign({}, payload, { accessToken: token, requestId }), 90000); }
+    try { result = await requestData(action, Object.assign({}, payload, { accessToken: token, deviceToken: getDeviceToken(), requestId }), 90000); }
     catch (error) {
       for (let attempt = 0; attempt < 6 && !result; attempt += 1) {
         await sleep(800 + attempt * 600);
@@ -134,7 +162,7 @@
       fetch(config.endpoint, {
         method: 'POST', keepalive: true, credentials: 'omit',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(Object.assign({}, payload, { action, accessToken: token }))
+        body: JSON.stringify(Object.assign({}, payload, { action, accessToken: token, deviceToken: getDeviceToken() }))
       }).catch(() => {});
     } catch (error) { /* nothing depends on this request */ }
   }
@@ -203,13 +231,44 @@
     });
   };
 
+  // A remembered browser that cannot reach the course right now is offered another try, never the
+  // password box: nothing is forgotten until the course itself says so.
+  const showRetry = (retry) => {
+    document.querySelector('.access-gate')?.remove();
+    document.body.dataset.access = 'locked';
+    document.body.classList.add('access-locked');
+    Array.from(document.body.children).forEach((node) => { node.inert = true; });
+    const gate = document.createElement('div');
+    gate.className = 'access-gate';
+    gate.setAttribute('role', 'dialog');
+    gate.setAttribute('aria-modal', 'true');
+    gate.setAttribute('aria-labelledby', 'access-title');
+    gate.innerHTML = `
+      <div class="access-card">
+        <p class="access-kicker">Yuanyuan | SEC English</p>
+        <h1 id="access-title">Welcome</h1>
+        <p>${OFFLINE}</p>
+        <div class="access-row"><button type="button">Try again</button></div>
+      </div>`;
+    document.body.append(gate);
+    gate.inert = false;
+    document.documentElement.classList.remove('access-pending');
+    const button = gate.querySelector('button');
+    button.focus();
+    button.addEventListener('click', () => { button.disabled = true; button.textContent = 'Opening...'; retry(); });
+  };
+
   const trustedDevice = consumeTrustedDevice() || getDeviceToken();
   if (trustedDevice) {
-    renewAccess(trustedDevice).then((access) => {
+    const start = () => renewAccess(trustedDevice).then((access) => {
       setAccess(access.accessToken, trustedDevice, access.expiresIn);
       reveal();
       resolveReady();
-    }).catch(() => { showGate(); });
+    }).catch((error) => {
+      if (error && error.reason) { forgetBrowser(); document.querySelector('.access-gate')?.remove(); showGate(); return; }
+      showRetry(start);
+    });
+    start();
     return;
   }
   showGate();
